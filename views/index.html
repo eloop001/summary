@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>GDPR compliant file upload</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+		<!-- LINEARICONS -->
+		<link rel="stylesheet" href="static/fonts/linearicons/style.css">
+
+		<!-- MATERIAL DESIGN ICONIC FONT -->
+		<link rel="stylesheet" href="static/fonts/material-design-iconic-font/css/material-design-iconic-font.min.css">
+		
+		<!-- STYLE CSS -->
+		<link rel="stylesheet" href="static/css/style.css">
+	</head>
+
+	<body>
+
+		<div class="wrapper">
+			<div class="inner">
+				<form action="/" method="post" enctype="multipart/form-data">
+					
+					<!--<h3><img src="./public/images/summaryLogo.png" height="200px" width="200px">Summarize file</h3>-->
+					<h3>Summarize file</h3>
+					<div class="form-row"> 
+						<!--	<div class="form-wrapper"> -->
+<!--							<label for="">Input URL of file</label>
+							<input type="text" class="form-control" placeholder="public_path">  -->
+					<!--	</div> -->
+					<!--	<div class="form-wrapper"> -->
+
+							<label for="fileUpload">Upload file from your PC</label>
+							<input type="file" name="upload" class="form-control" placeholder="local_file">
+					<!--	</div> -->
+					</div>
+>
+					<div class="form-row last">
+						<div class="form-wrapper">
+							<label for="">Content</label>
+							<select name="" id="" class="form-control">
+								<option value="1">Discussion</option>
+								<option value="2">Interview</option>
+								<option value="3">Meeting</option>
+								<option value="3">Presentation</option>
+							</select>
+							<i class="zmdi zmdi-chevron-down"></i>
+						</div>
+						<div class="form-wrapper">
+						</div>
+					</div>
+					<button type="submit" value="Upload" data-text="upload">
+						
+						<span>Upload file</span>
+					</button>
+					<br>
+					<p><b><div class="animated fadeOut">{{.Msg}}</div></b></p>
+					<br>
+					After the files is uploaded, you will receive an email confirming reciept of the file.					
+					When the summary is ready, you will receive an email containing the summary.
+					Immediately after the summary is sent, the uploaded file and the summary is permanently deleted from the server.
+
+				</form>
+			</div>
+		</div>
+		<div> 
+			<br><br><br>
+			<div>
+				<p>
+					<br>
+					This service is GDPR compliant. The service is hosted in the Google Cloud Hosting center <a href="https://goo.gl/maps/jD5pj9LiBcZbmZtH7">Ensontie 1, 49420 Hamina, Finland</a> 
+					within the EU data protection zone.	Data only resides on the services for the duration of
+					the upload and process of summarization and is <b>deleted immediately afterwards.</b>
+					Uploaded files and the derived summaries of these are encrypted while in temporary storage.
+					We store your mail address, and organization for the purpose of billing.
+
+				</p>
+				<p>
+					<b>Cookie policy: This website does not use cookies. </b> 
+				</p>
+				<p>
+					Contact details - Big Data at Innovation Lab, ApS, Mariane Thomsens Gade 6, 8000 Aarhus C - CVR: DK-36539879  - mail: bigdata@ilab.dk - phone: +45 41416181
+				</p>
+				
+			</div>
+		
+		
+		</div>
+		
+		<script src="static/js/jquery-3.3.1.min.js"></script>
+
+		<!-- DATE-PICKER -->
+		<script src="static/vendor/date-picker/js/datepicker.js"></script>
+		<script src="static/vendor/date-picker/js/datepicker.en.js"></script>
+
+		<script src="static/js/main.js"></script>
+	</body><!-- This templates was made by Colorlib (https://colorlib.com) -->
+</html>

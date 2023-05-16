@@ -1,112 +1,154 @@
-// Copyright 2021 Google LLC
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
-	"net/http"
+	"net/url"
 	"os"
-	"os/signal"
-	"time"
+	"strings"
 
-	"cloud.google.com/go/logging"
-	"example.com/micro/metadata"
-	"github.com/gorilla/mux"
-	"google.golang.org/api/option"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"github.com/go-mail/mail"
+	"github.com/google/uuid"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/template/html"
+	"github.com/joho/godotenv"
 )
 
-type App struct {
-	*http.Server
-	projectID string
-	log       *logging.Logger
+// create function init
+func init() {
+	// load variable from .env file
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 }
 
 func main() {
-	ctx := context.Background()
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-	log.Printf("listening on port %s", port)
-	projectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
-	app, err := newApp(ctx, port, projectID)
-	if err != nil {
-		log.Fatalf("unable to initialize application: %v", err)
-	}
-	log.Println("starting HTTP server")
-	go func() {
-		if err := app.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Server closed: %v", err)
+
+	var allowed_filetypes [4]string
+	allowed_filetypes[0] = ".mp4"
+	allowed_filetypes[1] = ".mp3"
+	allowed_filetypes[2] = ".docx"
+	allowed_filetypes[3] = ".pdf"
+
+	// load template
+	engine := html.New("./views", ".html")
+
+	// create go fiber app
+	app := fiber.New(fiber.Config{
+		Views:     engine,
+		BodyLimit: 1024 * 1024 * 1024,
+	})
+	// seave static assets
+	app.Static("/static", "./public")
+	// create route
+	app.Get("/", func(c *fiber.Ctx) error {
+		var current_user_key string
+
+		queryValue := c.Query("key")
+		if queryValue == "abc" {
+			current_user_key = queryValue
+			return c.Render("index", fiber.Map{
+				"Title": "summary.run - GDPR compliant file upload",
+			})
+			//
 		}
-	}()
+		if queryValue == "" && current_user_key == "abc" {
+			return c.Render("index", url.Values{"key": {"abc"}})
+		} else {
+			return c.SendString("Invalid key")
+		}
 
-	// Listen for SIGINT to gracefully shutdown.
-	nctx, stop := signal.NotifyContext(ctx, os.Interrupt, os.Kill)
-	defer stop()
-	<-nctx.Done()
-	log.Println("shutdown initiated")
+	})
 
-	// Cloud Run gives apps 10 seconds to shutdown. See
-	// https://cloud.google.com/blog/topics/developers-practitioners/graceful-shutdowns-cloud-run-deep-dive
-	// for more details.
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-	app.Shutdown(ctx)
-	log.Println("shutdown")
+	// create a post route to accept upload file
+	app.Post("/", func(c *fiber.Ctx) error {
+		// get file from form
+
+		file, err := c.FormFile("upload")
+		if err != nil {
+			return err
+		}
+
+		var allowed bool
+		allowed = false
+
+		fileguid := uuid.New().String()
+		file_suffix := file.Filename[strings.LastIndex(file.Filename, "."):]
+
+		// check if file suffix is in a list of allowed file types
+		for _, allowed_filetype := range allowed_filetypes {
+			if file_suffix == allowed_filetype {
+				err = c.SaveFile(file, "./uploads/"+fileguid+file_suffix)
+				send_mail("bigdata@ilab.dk", 0, file.Filename)
+				fmt.Print("Mail sent")
+				allowed = true
+				if err != nil {
+					return err
+				}
+			}
+		}
+		// save file to public folder
+		// 1st param is file that we get from form
+		// 2nd param is path to save file
+
+		//return c.Render("index", url.Values{"key": {"abc"}})
+		// return success message
+		if allowed == false {
+			return c.Render("index", fiber.Map{
+				"Title":  "Home",
+				"Msg":    "❌ File type not allowed!",
+				"File":   file.Filename,
+				"Params": url.Values{"key": {c.Params("key")}},
+			})
+		} else {
+			return c.Render("index", fiber.Map{
+				"Title":  "Home",
+				"Msg":    "✔ File uploaded successfully!",
+				"File":   file.Filename,
+				"Params": url.Values{"key": {c.Params("key")}},
+			})
+		}
+	})
+
+	// start app with port from .env file
+	err := app.Listen(os.Getenv("HOST") + ":" + os.Getenv("PORT"))
+	if err != nil {
+		println(err.Error())
+	}
+
 }
 
-func newApp(ctx context.Context, port, projectID string) (*App, error) {
-	app := &App{
-		Server: &http.Server{
-			Addr: ":" + port,
-			// Add some defaults, should be changed to suit your use case.
-			ReadTimeout:    10 * time.Second,
-			WriteTimeout:   10 * time.Second,
-			MaxHeaderBytes: 1 << 20,
-		},
+func send_mail(To string, Type int, fname string) {
+	if len(fname) > 10 {
+		fname = fname[0:4] + "***" + fname[len(fname)-5:]
+	} else {
+		fname = fname[0:1] + "*" + fname[len(fname)-4:]
 	}
 
-	if projectID == "" {
-		projID, err := metadata.ProjectID()
-		if err != nil {
-			return nil, fmt.Errorf("unable to detect Project ID from GOOGLE_CLOUD_PROJECT or metadata server: %w", err)
-		}
-		projectID = projID
+	var Mail_texts [3]string
+	var Subject_texts [3]string
+
+	Mail_texts[0] = "Thank you for using summary.run. We have recieved your file " + fname + ", and summarization has started."
+	Mail_texts[1] = "Your summary is ready. Please see attached file."
+	Mail_texts[2] = ""
+
+	Subject_texts[0] = "Summary.run - File recieved"
+	Subject_texts[1] = "Summary.run - Summary ready"
+
+	m := mail.NewMessage()
+
+	m.SetHeader("From", "run@summary.run")
+	m.SetHeader("To", To)
+	//m.SetAddressHeader("Cc", "oliver.doe@example.com", "Oliver")
+
+	m.SetHeader("Subject", Subject_texts[Type])
+	m.SetBody("text/html", Mail_texts[Type])
+	//m.Attach("lolcat.jpg")
+	d := mail.NewDialer("send.one.com", 465, "run@summary.run", "gpOUy5T8gT2jiSnYvy8B")
+
+	if err := d.DialAndSend(m); err != nil {
+		panic(err)
 	}
-	app.projectID = projectID
-
-	client, err := logging.NewClient(ctx, fmt.Sprintf("projects/%s", app.projectID),
-		// We don't need to make any requests when logging to stderr.
-		option.WithoutAuthentication(),
-		option.WithGRPCDialOption(
-			grpc.WithTransportCredentials(insecure.NewCredentials()),
-		))
-	if err != nil {
-		return nil, fmt.Errorf("unable to initialize logging client: %v", err)
-	}
-	app.log = client.Logger("test-log", logging.RedirectAsJSON(os.Stderr))
-
-	// Setup request router.
-	r := mux.NewRouter()
-	r.HandleFunc("/", app.Handler).
-		Methods("GET")
-	app.Server.Handler = r
-
-	return app, nil
 }

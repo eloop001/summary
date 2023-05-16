@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Summary.run upload service</title>
+    <style>
+        body {
+            background-color: #ffffff;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.5;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        div {
+            font-size: 10px;
+            text-align: center;
+        }
+
+        form {
+            max-width: 400px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        input[type="file"] {
+            margin-bottom: 20px;
+            background-color: #e7e5fd;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #3e8e41;
+        }
+
+        p {
+            font-size: 18px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Upload File</h1>
+    <form action="/" method="post" enctype="multipart/form-data">
+        <input type="file" name="upload">
+        <input type="submit" value="Upload">
+    </form>
+    <!-- <p>{{.File}}</p>-->
+    <p>File upload successful</p>
+    <div id="desc_text">
+        <p>This service is GDPR compliant. It's located</p>
+        <p>in the Google Cloud Hosting center <a href="https://goo.gl/maps/jD5pj9LiBcZbmZtH7">Ensontie 1, 49420 Hamina, Finland</a> within</p>
+        <p>the EU data protection zone.</p>
+        <p>Data only resides on the services for the duration of
+            the upload and process of summarization and is <b>deleted immediately afterwards.</b>
+        <p>Uploaded files and the derived summaries of these are encrypted while in temporary storage.</p>
+        <p>We store the your anonymous TokenId, that is linked to your mail address and organization for the purpose of billing.</p>
+        </p> <p>Refer to Google Cloud GDPR compliance certifications at this <a href="https://cloud.google.com/privacy/gdpr">https://cloud.google.com/privacy/gdpr<a></p>
+        </p>
+        <p>Cookie policy: This service does not use cookies.</p>
+    </div>
+</body>
+
+</html>
